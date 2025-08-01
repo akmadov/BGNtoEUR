@@ -1,4 +1,4 @@
-console.log("🧿 MutationObserver: Safe append mode");
+console.log("🧿 Safe EUR converter loaded");
 
 const RATE = 1.95583;
 
@@ -14,7 +14,8 @@ function convertPriceText(bgnText) {
 }
 
 function appendConvertedPrice(el) {
-  if (el.dataset.eurConverted) return;
+  // Skip if already appended
+  if (el.querySelector('.eur-price-addon')) return;
 
   const text = el.innerText;
   if (!text.includes("лв")) return;
@@ -22,36 +23,44 @@ function appendConvertedPrice(el) {
   const eur = convertPriceText(text);
   if (eur) {
     const span = document.createElement("span");
-    span.style.marginLeft = "8px";
+    span.className = "eur-price-addon";
+    span.style.marginLeft = "6px";
     span.style.fontStyle = "italic";
     span.style.fontSize = "90%";
     span.textContent = `(${eur})`;
     el.appendChild(span);
-
-    el.dataset.eurConverted = "true";
   }
 }
 
 function convertAllPrices() {
   const elements = document.querySelectorAll("span, p, div, h1, h2, h3");
-  elements.forEach(appendConvertedPrice);
+  elements.forEach(el => {
+    if (el.innerText.includes("лв")) {
+      appendConvertedPrice(el);
+    }
+  });
 }
 
-// Watch DOM
-const observer = new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    for (const node of mutation.addedNodes) {
-      if (node.nodeType === 1) {
-        appendConvertedPrice(node);
-        const descendants = node.querySelectorAll?.("span, p, div, h1, h2, h3") || [];
-        descendants.forEach(appendConvertedPrice);
-      }
-    }
-  }
-});
-
+// Run on initial load
 window.addEventListener("load", () => {
-  console.log("🚀 DOM loaded – observing and appending...");
+  console.log("🚀 EUR converter running...");
   convertAllPrices();
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) {
+          if (node.innerText?.includes("лв")) {
+            appendConvertedPrice(node);
+          }
+          const nested = node.querySelectorAll?.("span, p, div, h1, h2, h3") || [];
+          nested.forEach(el => {
+            if (el.innerText.includes("лв")) appendConvertedPrice(el);
+          });
+        }
+      });
+    }
+  });
+
   observer.observe(document.body, { childList: true, subtree: true });
 });

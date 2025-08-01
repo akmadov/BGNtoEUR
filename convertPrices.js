@@ -1,4 +1,4 @@
-console.log("🧿 MutationObserver version of Price Converter loaded");
+console.log("🧿 MutationObserver: Safe append mode");
 
 const RATE = 1.95583;
 
@@ -13,45 +13,45 @@ function convertPriceText(bgnText) {
   return `EUR ${eur}`;
 }
 
-function convertPricesInNode(node) {
-  if (!node || !node.innerText) return;
+function appendConvertedPrice(el) {
+  if (el.dataset.eurConverted) return;
 
-  const text = node.innerText;
-  if (node.dataset && node.dataset.eurConverted) return;
+  const text = el.innerText;
+  if (!text.includes("лв")) return;
 
-  if (text.includes("лв")) {
-    const eur = convertPriceText(text);
-    if (eur) {
-      node.innerText = `${text} (${eur})`;
-      node.dataset.eurConverted = "true";
-    }
+  const eur = convertPriceText(text);
+  if (eur) {
+    const span = document.createElement("span");
+    span.style.marginLeft = "8px";
+    span.style.fontStyle = "italic";
+    span.style.fontSize = "90%";
+    span.textContent = `(${eur})`;
+    el.appendChild(span);
+
+    el.dataset.eurConverted = "true";
   }
 }
 
 function convertAllPrices() {
   const elements = document.querySelectorAll("span, p, div, h1, h2, h3");
-  elements.forEach(convertPricesInNode);
+  elements.forEach(appendConvertedPrice);
 }
 
-// Observe DOM changes and react dynamically
+// Watch DOM
 const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {
     for (const node of mutation.addedNodes) {
       if (node.nodeType === 1) {
-        convertPricesInNode(node);
+        appendConvertedPrice(node);
         const descendants = node.querySelectorAll?.("span, p, div, h1, h2, h3") || [];
-        descendants.forEach(convertPricesInNode);
+        descendants.forEach(appendConvertedPrice);
       }
     }
   }
 });
 
 window.addEventListener("load", () => {
-  console.log("🚀 Page loaded, starting DOM observation");
+  console.log("🚀 DOM loaded – observing and appending...");
   convertAllPrices();
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  observer.observe(document.body, { childList: true, subtree: true });
 });

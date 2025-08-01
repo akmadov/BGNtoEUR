@@ -15,6 +15,8 @@ function convertPriceText(bgnText) {
 }
 
 function appendConvertedPrice(el) {
+  if (!el || typeof el.innerText !== "string") return;
+
   const originalText = el.innerText.trim();
 
   if (!originalText.includes("лв")) return;
@@ -32,6 +34,7 @@ function appendConvertedPrice(el) {
     convertedTextCache.add(originalText); // mark as done
   }
 }
+
 
 function convertAllPrices() {
   const elements = document.querySelectorAll("span, p, div, h1, h2, h3");

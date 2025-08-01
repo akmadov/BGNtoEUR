@@ -1,4 +1,4 @@
-console.log("🕓 Waiting to convert prices...");
+console.log("🧿 MutationObserver version of Price Converter loaded");
 
 const RATE = 1.95583;
 
@@ -13,32 +13,45 @@ function convertPriceText(bgnText) {
   return `EUR ${eur}`;
 }
 
-function convertAllPrices() {
-  try {
-    console.log("🔁 Running price conversion...");
-    const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
-    priceSelectors.forEach((selector) => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach((el) => {
-        if (el.dataset.eurConverted) return;
+function convertPricesInNode(node) {
+  if (!node || !node.innerText) return;
 
-        const text = el.innerText;
-        if (!text.includes("лв")) return;
+  const text = node.innerText;
+  if (node.dataset && node.dataset.eurConverted) return;
 
-        const eur = convertPriceText(text);
-        if (eur) {
-          el.innerText = `${text} (${eur})`;
-          el.dataset.eurConverted = "true";
-        }
-      });
-    });
-    console.log("✅ Prices converted.");
-  } catch (err) {
-    console.error("❌ Error during conversion:", err);
+  if (text.includes("лв")) {
+    const eur = convertPriceText(text);
+    if (eur) {
+      node.innerText = `${text} (${eur})`;
+      node.dataset.eurConverted = "true";
+    }
   }
 }
 
+function convertAllPrices() {
+  const elements = document.querySelectorAll("span, p, div, h1, h2, h3");
+  elements.forEach(convertPricesInNode);
+}
+
+// Observe DOM changes and react dynamically
+const observer = new MutationObserver((mutations) => {
+  for (const mutation of mutations) {
+    for (const node of mutation.addedNodes) {
+      if (node.nodeType === 1) {
+        convertPricesInNode(node);
+        const descendants = node.querySelectorAll?.("span, p, div, h1, h2, h3") || [];
+        descendants.forEach(convertPricesInNode);
+      }
+    }
+  }
+});
+
 window.addEventListener("load", () => {
-  console.log("🚀 Page loaded. Starting 10-second delay...");
-  setTimeout(convertAllPrices, 10000);
+  console.log("🚀 Page loaded, starting DOM observation");
+  convertAllPrices();
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 });

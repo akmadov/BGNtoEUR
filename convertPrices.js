@@ -1,7 +1,5 @@
-console.log("💶 EUR Converter Script Active");
-
 const RATE = 1.95583;
-const convertedTextCache = new Set(); // 🧠 track already-processed texts
+const convertedTextCache = new WeakSet(); // Track only DOM elements now
 
 function convertPriceText(bgnText) {
   const match = bgnText.match(/([\d,.]+)\s*лв/);
@@ -16,11 +14,10 @@ function convertPriceText(bgnText) {
 
 function appendConvertedPrice(el) {
   if (!el || typeof el.innerText !== "string") return;
+  if (convertedTextCache.has(el)) return;
 
   const originalText = el.innerText.trim();
-
   if (!originalText.includes("лв")) return;
-  if (convertedTextCache.has(originalText)) return; // already processed
 
   const eur = convertPriceText(originalText);
   if (eur) {
@@ -30,34 +27,31 @@ function appendConvertedPrice(el) {
     span.style.fontStyle = "italic";
     span.style.fontSize = "90%";
     span.textContent = `(${eur})`;
+
     el.appendChild(span);
-    convertedTextCache.add(originalText); // mark as done
+    convertedTextCache.add(el);
   }
 }
 
-
 function convertAllPrices() {
-  const elements = document.querySelectorAll("span, p, div, h1, h2, h3");
-  elements.forEach(el => appendConvertedPrice(el));
+  const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
+  priceSelectors.forEach((selector) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(appendConvertedPrice);
+  });
 }
 
-// 🚀 Initial run
-window.addEventListener("load", () => {
-  console.log("🔁 Initial price conversion...");
+// 👀 Observe changes and react
+const observer = new MutationObserver(() => {
   convertAllPrices();
+});
 
-  // 🧲 Observe future changes
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) {
-          appendConvertedPrice(node);
-          const nested = node.querySelectorAll?.("span, p, div, h1, h2, h3") || [];
-          nested.forEach(el => appendConvertedPrice(el));
-        }
-      });
-    }
+window.addEventListener("load", () => {
+  console.log("🧪 Observer active: watching for price updates...");
+  convertAllPrices(); // Run initially
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
   });
-
-  observer.observe(document.body, { childList: true, subtree: true });
 });

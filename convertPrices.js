@@ -1,6 +1,7 @@
-console.log("🧿 Safe EUR converter loaded");
+console.log("💶 EUR Converter Script Active");
 
 const RATE = 1.95583;
+const convertedTextCache = new Set(); // 🧠 track already-processed texts
 
 function convertPriceText(bgnText) {
   const match = bgnText.match(/([\d,.]+)\s*лв/);
@@ -14,13 +15,12 @@ function convertPriceText(bgnText) {
 }
 
 function appendConvertedPrice(el) {
-  // Skip if already appended
-  if (el.querySelector('.eur-price-addon')) return;
+  const originalText = el.innerText.trim();
 
-  const text = el.innerText;
-  if (!text.includes("лв")) return;
+  if (!originalText.includes("лв")) return;
+  if (convertedTextCache.has(originalText)) return; // already processed
 
-  const eur = convertPriceText(text);
+  const eur = convertPriceText(originalText);
   if (eur) {
     const span = document.createElement("span");
     span.className = "eur-price-addon";
@@ -29,34 +29,28 @@ function appendConvertedPrice(el) {
     span.style.fontSize = "90%";
     span.textContent = `(${eur})`;
     el.appendChild(span);
+    convertedTextCache.add(originalText); // mark as done
   }
 }
 
 function convertAllPrices() {
   const elements = document.querySelectorAll("span, p, div, h1, h2, h3");
-  elements.forEach(el => {
-    if (el.innerText.includes("лв")) {
-      appendConvertedPrice(el);
-    }
-  });
+  elements.forEach(el => appendConvertedPrice(el));
 }
 
-// Run on initial load
+// 🚀 Initial run
 window.addEventListener("load", () => {
-  console.log("🚀 EUR converter running...");
+  console.log("🔁 Initial price conversion...");
   convertAllPrices();
 
+  // 🧲 Observe future changes
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === 1) {
-          if (node.innerText?.includes("лв")) {
-            appendConvertedPrice(node);
-          }
+          appendConvertedPrice(node);
           const nested = node.querySelectorAll?.("span, p, div, h1, h2, h3") || [];
-          nested.forEach(el => {
-            if (el.innerText.includes("лв")) appendConvertedPrice(el);
-          });
+          nested.forEach(el => appendConvertedPrice(el));
         }
       });
     }

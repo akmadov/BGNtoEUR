@@ -12,7 +12,7 @@ function convertPriceText(bgnText) {
 }
 
 function convertAllPrices() {
-  const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
+  const priceSelectors = ["p", "span", "div", "h1", "h2", "h3"];
   priceSelectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach((el) => {
@@ -28,9 +28,15 @@ function convertAllPrices() {
       }
     });
   });
+  console.log("✅ EUR prices updated.");
+}
+
+function startConversionLoop() {
+  convertAllPrices();
+  setInterval(convertAllPrices, 2000); // Every 2 seconds
 }
 
 window.addEventListener("load", () => {
-  console.log("✅ Price converter loaded");
-  setTimeout(convertAllPrices, 500);
+  console.log("🚀 Price converter loaded & running...");
+  setTimeout(startConversionLoop, 1000);
 });

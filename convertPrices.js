@@ -83,12 +83,17 @@ function convertCheckoutSummaryPrices() {
   selectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach((el) => {
-      if (el.querySelector(".eur-price")) return;
+      if (el.dataset.eurConverted === "true") return;
+
       const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
+      if (eur) {
+        appendEUR(el, eur);
+        el.dataset.eurConverted = "true";
+      }
     });
   });
 }
+
 
 // ✅ Run all relevant functions
 function convertAllPrices() {

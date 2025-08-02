@@ -1,5 +1,3 @@
-const RATE = 1.95583;
-
 function convertPriceText(bgnText) {
   const match = bgnText.match(/([\d,.]+)\s*лв/);
   if (!match) return null;
@@ -7,7 +5,7 @@ function convertPriceText(bgnText) {
   const bgn = parseFloat(match[1].replace(/\./g, "").replace(",", "."));
   if (isNaN(bgn)) return null;
 
-  const eur = (bgn / RATE).toFixed(2);
+  const eur = (bgn / 1.95583).toFixed(2);
   return eur;
 }
 

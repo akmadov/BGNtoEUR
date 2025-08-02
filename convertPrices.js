@@ -12,47 +12,28 @@ function convertPriceText(bgnText) {
 }
 
 function convertAllPrices() {
+  console.log("🧪 Running safe price conversion...");
   const priceSelectors = ["span", "p", "div"];
   priceSelectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach((el) => {
       if (
-        el.dataset &&
-        el.dataset.eurConverted === "true"
+        el.dataset?.eurOriginalText ||
+        !el.innerText.includes("лв")
       ) return;
 
-      const text = el.innerText.trim();
-      if (!text.includes("лв")) return;
+      const originalText = el.innerText;
+      const converted = convertPriceText(originalText);
+      if (!converted) return;
 
-      const eur = convertPriceText(text);
-      if (!eur) return;
-
-      // Create a new span element for the EUR value
-      const eurSpan = document.createElement("span");
-      eurSpan.textContent = ` (${eur})`;
-      eurSpan.style.marginLeft = "4px";
-      eurSpan.style.fontSize = "90%";
-      eurSpan.style.color = "#333";
-      eurSpan.style.fontStyle = "italic";
-
-      // Append the EUR span safely without modifying existing content
-      el.appendChild(eurSpan);
-      el.dataset.eurConverted = "true";
+      el.innerText = `${originalText.trim()} (${converted})`;
+      el.dataset.eurOriginalText = originalText.trim(); // Prevent double conversions
     });
   });
+  console.log("✅ Price conversion done.");
 }
 
-// Watch for dynamically loaded prices
-const observer = new MutationObserver(() => {
-  convertAllPrices();
-});
-
 window.addEventListener("load", () => {
-  console.log("💶 EUR converter is running and observing...");
-  convertAllPrices();
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  console.log("🧪 Price converter loaded.");
+  setTimeout(convertAllPrices, 3000); // Give React time to fully render
 });

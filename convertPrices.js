@@ -11,6 +11,37 @@ function convertPriceText(bgnText) {
   return eur;
 }
 
+function convertCartTotals() {
+  const cartSelectors = [
+    '[data-hook="SubTotals.subtotalText"]',
+    '[data-hook="Total.formattedValue"]'
+  ];
+
+  cartSelectors.forEach((selector) => {
+    const el = document.querySelector(selector);
+    if (!el || !el.innerText.includes("лв")) return;
+
+    const existingEUR = el.querySelector(".eur-price");
+    const eur = convertPriceText(el.innerText);
+    if (!eur) return;
+
+    if (existingEUR) {
+      existingEUR.textContent = ` (${eur} EUR)`;
+    } else {
+      const eurSpan = document.createElement("span");
+      eurSpan.className = "eur-price";
+      eurSpan.textContent = ` (${eur} EUR)`;
+      eurSpan.style.cssText = `
+        font-size: 0.9em;
+        color: #2E2E2E;
+        margin-left: 6px;
+        white-space: nowrap;
+      `;
+      el.appendChild(eurSpan);
+    }
+  });
+}
+
 function convertAllPrices() {
   const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
 
@@ -18,17 +49,17 @@ function convertAllPrices() {
     const elements = document.querySelectorAll(selector);
 
     elements.forEach((el) => {
-      // ✅ Skip elements from side cart
+      // ✅ Skip prices in the side cart
       if (el.getAttribute("data-hook") === "CartItemDataHook.totalPrice") return;
       if (!el.innerText.includes("лв")) return;
 
       const existingEUR = el.querySelector(".eur-price");
-      const currentBGN = el.innerText.match(/([\d,.]+)\s*лв/);
+      const eur = convertPriceText(el.innerText);
+      if (!eur) return;
 
       // If there's already a EUR price, check if we need to update it
-      if (existingEUR && currentBGN) {
-        const eur = convertPriceText(el.innerText);
-        if (eur && existingEUR.textContent !== `(${eur} EUR)`) {
+      if (existingEUR) {
+        if (existingEUR.textContent !== `(${eur} EUR)`) {
           existingEUR.textContent = `(${eur} EUR)`;
         }
         return;
@@ -36,35 +67,31 @@ function convertAllPrices() {
 
       // Add new EUR price
       if (!el.dataset.eurConverted) {
-        const eur = convertPriceText(el.innerText);
-        if (eur) {
-          const eurSpan = document.createElement("span");
-          eurSpan.className = "eur-price";
-          eurSpan.textContent = `(${eur} EUR)`;
-          eurSpan.style.cssText = `
-            display: block;
-            text-align: center;
-            color: #2E2E2E;
-            margin-top: 2px;
-          `;
-          el.appendChild(eurSpan);
-          el.dataset.eurConverted = "true";
-        }
+        const eurSpan = document.createElement("span");
+        eurSpan.className = "eur-price";
+        eurSpan.textContent = `(${eur} EUR)`;
+        eurSpan.style.cssText = `
+          display: block;
+          text-align: center;
+          color: #2E2E2E;
+          margin-top: 2px;
+        `;
+        el.appendChild(eurSpan);
+        el.dataset.eurConverted = "true";
       }
     });
   });
+
+  // ✅ Handle cart subtotal and total
+  convertCartTotals();
 }
 
-// Wait for page to fully load, then watch for dynamic price changes
+// 🔁 Auto-run conversion every 2 seconds after load
 window.addEventListener("load", () => {
   console.log("🔁 Starting auto price conversion…");
 
   setTimeout(() => {
     convertAllPrices();
-
-    // Check every 2 seconds for updates
-    setInterval(() => {
-      convertAllPrices();
-    }, 2000);
+    setInterval(convertAllPrices, 2000);
   }, 3000);
 });

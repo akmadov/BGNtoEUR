@@ -12,7 +12,7 @@ function convertPriceText(bgnText) {
 }
 
 function convertAllPrices() {
-  const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
+  const priceSelectors = ["span", "p", "div"];
   priceSelectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach((el) => {
@@ -25,26 +25,34 @@ function convertAllPrices() {
       if (!text.includes("лв")) return;
 
       const eur = convertPriceText(text);
-      if (eur) {
-        el.innerText = `${text} (${eur})`;
-        el.dataset.eurConverted = "true";
-      }
+      if (!eur) return;
+
+      // Create a new span element for the EUR value
+      const eurSpan = document.createElement("span");
+      eurSpan.textContent = ` (${eur})`;
+      eurSpan.style.marginLeft = "4px";
+      eurSpan.style.fontSize = "90%";
+      eurSpan.style.color = "#333";
+      eurSpan.style.fontStyle = "italic";
+
+      // Append the EUR span safely without modifying existing content
+      el.appendChild(eurSpan);
+      el.dataset.eurConverted = "true";
     });
   });
 }
 
-// 👀 MutationObserver to catch dynamic updates
+// Watch for dynamically loaded prices
 const observer = new MutationObserver(() => {
   convertAllPrices();
 });
 
 window.addEventListener("load", () => {
-  console.log("💶 Price converter loaded and watching...");
+  console.log("💶 EUR converter is running and observing...");
   convertAllPrices();
 
   observer.observe(document.body, {
     childList: true,
     subtree: true,
-    characterData: true,
   });
 });

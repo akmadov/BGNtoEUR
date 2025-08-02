@@ -3,7 +3,7 @@ const RATE = 1.95583;
 function convertPriceText(bgnText) {
   const cleaned = bgnText
     .replace(/\./g, "")
-    .replace(",", ",")
+    .replace(",", ".")
     .replace(/[^\d.]/g, "");
   const bgn = parseFloat(cleaned);
   if (isNaN(bgn)) return null;

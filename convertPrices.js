@@ -18,6 +18,8 @@ function convertAllPrices() {
     const elements = document.querySelectorAll(selector);
 
     elements.forEach((el) => {
+      // ✅ Skip elements from side cart
+      if (el.getAttribute("data-hook") === "CartItemDataHook.totalPrice") return;
       if (!el.innerText.includes("лв")) return;
 
       const existingEUR = el.querySelector(".eur-price");

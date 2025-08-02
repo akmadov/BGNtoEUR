@@ -1,7 +1,10 @@
 const RATE = 1.95583;
 
 function convertPriceText(bgnText) {
-  const cleaned = bgnText.replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, "");
+  const cleaned = bgnText
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .replace(/[^\d.]/g, "");
   const bgn = parseFloat(cleaned);
   if (isNaN(bgn)) return null;
   return (bgn / RATE).toFixed(2);
@@ -20,7 +23,6 @@ function appendEUR(el, eur) {
   el.appendChild(eurSpan);
 }
 
-// ✅ Category product listings
 function convertCategoryPrices() {
   const productPriceElements = document.querySelectorAll('[data-hook="product-item-price-to-pay"]');
   productPriceElements.forEach((el) => {
@@ -30,7 +32,6 @@ function convertCategoryPrices() {
   });
 }
 
-// ✅ Product detail page (rich text)
 function convertProductPagePrice() {
   const richTextDivs = document.querySelectorAll('div[data-testid="richTextElement"]');
   richTextDivs.forEach((div) => {
@@ -41,7 +42,6 @@ function convertProductPagePrice() {
   });
 }
 
-// ✅ Cart page totals
 function convertCartTotals() {
   const cartSelectors = [
     '[data-hook="SubTotals.subtotalText"]',
@@ -56,7 +56,6 @@ function convertCartTotals() {
   });
 }
 
-// ✅ Side cart
 function convertSideCartPrices() {
   const selectors = [
     '[data-hook="CartItemDataHook.price"]',
@@ -73,43 +72,41 @@ function convertSideCartPrices() {
   });
 }
 
-// ✅ Checkout summary / foldable summary
 function convertCheckoutSummaryPrices() {
   const selectors = [
     '[data-hook="FoldableSummarySectionDataHook.total"]',
     '[data-hook="LineItemDataHooks.Price"]',
     '[data-hook="total-row-value"] span'
   ];
+
   selectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach((el) => {
-      if (el.dataset.eurConverted === "true") return;
+      const text = el.innerText;
+      if (!text.includes("лв")) return;
+      if (text.includes("EUR")) return; // Prevent duplicates
 
-      const eur = convertPriceText(el.innerText);
+      const eur = convertPriceText(text);
       if (eur) {
-        appendEUR(el, eur);
-        el.dataset.eurConverted = "true";
+        el.innerText = `${text} (${eur} EUR)`;
       }
     });
   });
 }
 
-
-// ✅ Run all relevant functions
 function convertAllPrices() {
   convertCategoryPrices();
   convertProductPagePrice();
   convertCartTotals();
   convertSideCartPrices();
-  convertCheckoutSummaryPrices();
+  convertCheckoutSummaryPrices(); // ✅ Final set
 }
 
-// ✅ Delayed execution to allow dynamic content to load
 window.addEventListener("load", () => {
   console.log("🧪 EUR price converter running (all contexts)");
 
   setTimeout(() => {
     convertAllPrices();
-    setInterval(convertAllPrices, 2000);
+    setInterval(convertAllPrices, 2000); // Check for dynamic changes
   }, 3000);
 });

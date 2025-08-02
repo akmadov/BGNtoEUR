@@ -1,55 +1,68 @@
-  const RATE = 1.95583;
+const RATE = 1.95583;
 
-  function convertPriceText(bgnText) {
-    const match = bgnText.match(/([\d,.]+)\s*лв/);
-    if (!match) return null;
+function convertPriceText(bgnText) {
+  const match = bgnText.match(/([\d,.]+)\s*лв/);
+  if (!match) return null;
 
-    const bgn = parseFloat(match[1].replace(/\./g, "").replace(",", "."));
-    if (isNaN(bgn)) return null;
+  const bgn = parseFloat(match[1].replace(/\./g, "").replace(",", "."));
+  if (isNaN(bgn)) return null;
 
-    const eur = (bgn / RATE).toFixed(2);
-    return `(${eur} EUR)`;
-  }
+  const eur = (bgn / RATE).toFixed(2);
+  return eur;
+}
 
-  function convertAllPrices() {
-    const elements = document.querySelectorAll("*:not([data-eur-converted])");
+function convertAllPrices() {
+  const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
+
+  priceSelectors.forEach((selector) => {
+    const elements = document.querySelectorAll(selector);
 
     elements.forEach((el) => {
-      if (
-        el.getAttribute("data-hook") === "CartItemDataHook.totalPrice" ||
-        el.innerText.includes("EUR") ||
-        !el.innerText.includes("лв")
-      ) {
+      if (!el.innerText.includes("лв")) return;
+
+      const existingEUR = el.querySelector(".eur-price");
+      const currentBGN = el.innerText.match(/([\d,.]+)\s*лв/);
+
+      // If there's already a EUR price, check if we need to update it
+      if (existingEUR && currentBGN) {
+        const eur = convertPriceText(el.innerText);
+        if (eur && existingEUR.textContent !== `(${eur} EUR)`) {
+          existingEUR.textContent = `(${eur} EUR)`;
+        }
         return;
       }
 
-      const eur = convertPriceText(el.innerText);
-      if (eur) {
-        const wrapper = document.createElement("div");
-        wrapper.style.display = "flex";
-        wrapper.style.flexDirection = "column";
-        wrapper.style.alignItems = "center";
-        wrapper.style.fontSize = getComputedStyle(el).fontSize;
-
-        const original = document.createElement("div");
-        original.innerText = el.innerText;
-
-        const converted = document.createElement("div");
-        converted.innerText = eur;
-
-        wrapper.appendChild(original);
-        wrapper.appendChild(converted);
-
-        el.innerText = "";
-        el.appendChild(wrapper);
-        el.dataset.eurConverted = "true";
+      // Add new EUR price
+      if (!el.dataset.eurConverted) {
+        const eur = convertPriceText(el.innerText);
+        if (eur) {
+          const eurSpan = document.createElement("span");
+          eurSpan.className = "eur-price";
+          eurSpan.textContent = `(${eur} EUR)`;
+          eurSpan.style.cssText = `
+            display: block;
+            text-align: center;
+            color: #2E2E2E;
+            margin-top: 2px;
+          `;
+          el.appendChild(eurSpan);
+          el.dataset.eurConverted = "true";
+        }
       }
     });
-  }
+  });
+}
 
-  window.addEventListener("load", () => {
+// Wait for page to fully load, then watch for dynamic price changes
+window.addEventListener("load", () => {
+  console.log("🔁 Starting auto price conversion…");
+
+  setTimeout(() => {
+    convertAllPrices();
+
+    // Check every 2 seconds for updates
     setInterval(() => {
-      console.log("🔁 Running conversion check");
       convertAllPrices();
     }, 2000);
-  });
+  }, 3000);
+});

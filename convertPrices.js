@@ -1,86 +1,77 @@
 const RATE = 1.95583;
 
 function convertPriceText(bgnText) {
-  const cleaned = bgnText.replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, "");
-  const bgn = parseFloat(cleaned);
+  const numeric = bgnText.replace(/\./g, "").replace(",", ".").replace(/[^\d.]/g, "");
+  const bgn = parseFloat(numeric);
   if (isNaN(bgn)) return null;
   return (bgn / RATE).toFixed(2);
 }
 
-function appendEUR(el, eur) {
+function appendEurPrice(el, eur) {
+  // Check if already appended
+  if (el.querySelector(".eur-price")) return;
+
   const eurSpan = document.createElement("span");
   eurSpan.className = "eur-price";
   eurSpan.textContent = ` (${eur} EUR)`;
   eurSpan.style.cssText = `
-    font-size: 0.9em;
+    display: block;
+    text-align: center;
     color: #2E2E2E;
-    margin-left: 6px;
-    white-space: nowrap;
+    margin-top: 2px;
+    font-size: inherit;
   `;
   el.appendChild(eurSpan);
 }
 
-function convertCategoryPrices() {
-  const productPriceElements = document.querySelectorAll('[data-hook="product-item-price-to-pay"]');
-  productPriceElements.forEach((el) => {
-    if (el.querySelector(".eur-price")) return;
-    const eur = convertPriceText(el.textContent);
-    if (eur) appendEUR(el, eur);
-  });
+function convertPriceInElement(el) {
+  if (!el || el.dataset.eurConverted === "true") return;
+
+  const text = el.innerText;
+  if (!text.includes("лв")) return;
+
+  const eur = convertPriceText(text);
+  if (!eur) return;
+
+  appendEurPrice(el, eur);
+  el.dataset.eurConverted = "true";
 }
 
-function convertProductPagePrice() {
-  const richTextDivs = document.querySelectorAll('div[data-testid="richTextElement"]');
-  richTextDivs.forEach((div) => {
-    const p = div.querySelector("p");
-    if (!p || !p.innerText.includes("лв") || p.querySelector(".eur-price")) return;
-    const eur = convertPriceText(p.innerText);
-    if (eur) appendEUR(p, eur);
-  });
-}
-
-function convertCartTotals() {
-  const cartSelectors = [
-    '[data-hook="SubTotals.subtotalText"]',
-    '[data-hook="Total.formattedValue"]'
-  ];
-  cartSelectors.forEach((selector) => {
-    const el = document.querySelector(selector);
-    if (el && !el.querySelector(".eur-price")) {
-      const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
-    }
-  });
-}
-
-function convertSideCartPrices() {
+function convertAllDesignatedPrices() {
   const selectors = [
+    // ✅ CATEGORY PAGE
+    '[data-hook="product-item-price-to-pay"]',
+
+    // ✅ PRODUCT PAGE
+    '[data-testid="richTextElement"]',
+
+    // ✅ MAIN CART
+    '[data-hook="SubTotals.subtotalText"]',
+    '[data-hook="Total.formattedValue"]',
+
+    // ✅ SIDE CART
     '[data-hook="CartItemDataHook.price"]',
     '[data-hook="CartItemDataHook.totalPrice"] div',
-    '[data-hook="Footer.subtotalValue"]'
+    '[data-hook="Footer.subtotalValue"]',
+
+    // ✅ CHECKOUT SUMMARY + LINE ITEMS
+    '[data-hook="FoldableSummarySectionDataHook.total"]',
+    '[data-hook="LineItemDataHooks.Price"]',
+    '[data-hook="total-row-value"] span'
   ];
+
   selectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
-    elements.forEach((el) => {
-      if (el.querySelector(".eur-price")) return;
-      const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
-    });
+    elements.forEach(convertPriceInElement);
   });
 }
 
-function convertAllPrices() {
-  convertCategoryPrices();
-  convertProductPagePrice();
-  convertCartTotals();
-  convertSideCartPrices();
-}
-
+// 🔁 Auto-run conversion every 2 seconds after load
 window.addEventListener("load", () => {
-  console.log("🧪 EUR price converter running (all contexts)");
+  console.log("🔁 Starting auto price conversion…");
 
   setTimeout(() => {
-    convertAllPrices();
-    setInterval(convertAllPrices, 2000);
+    convertAllDesignatedPrices();
+    setInterval(convertAllDesignatedPrices, 2000);
   }, 3000);
 });

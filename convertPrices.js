@@ -12,42 +12,57 @@ function convertPriceText(bgnText) {
 }
 
 function convertAllPrices() {
-  console.log("🔁 Running conversion…");
   const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
 
   priceSelectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
 
     elements.forEach((el) => {
-      if (el.dataset.eurConverted) return;
       if (!el.innerText.includes("лв")) return;
-      if (el.querySelector(".eur-price")) return;
 
-      const originalText = el.innerText.trim();
-      const eur = convertPriceText(originalText);
+      const existingEUR = el.querySelector(".eur-price");
+      const currentBGN = el.innerText.match(/([\d,.]+)\s*лв/);
 
-      if (eur) {
-        const eurSpan = document.createElement("span");
-        eurSpan.className = "eur-price";
-        eurSpan.textContent = `(${eur} EUR)`;
+      // If there's already a EUR price, check if we need to update it
+      if (existingEUR && currentBGN) {
+        const eur = convertPriceText(el.innerText);
+        if (eur && existingEUR.textContent !== `(${eur} EUR)`) {
+          existingEUR.textContent = `(${eur} EUR)`;
+        }
+        return;
+      }
 
-        // ✅ Styling to match original price (no small text)
-        eurSpan.style.cssText = `
-          display: block;
-          text-align: center;
-          color: #2E2E2E;
-          margin-top: 2px;
-        `;
-
-        el.appendChild(eurSpan);
-        el.dataset.eurConverted = "true";
+      // Add new EUR price
+      if (!el.dataset.eurConverted) {
+        const eur = convertPriceText(el.innerText);
+        if (eur) {
+          const eurSpan = document.createElement("span");
+          eurSpan.className = "eur-price";
+          eurSpan.textContent = `(${eur} EUR)`;
+          eurSpan.style.cssText = `
+            display: block;
+            text-align: center;
+            color: #2E2E2E;
+            margin-top: 2px;
+          `;
+          el.appendChild(eurSpan);
+          el.dataset.eurConverted = "true";
+        }
       }
     });
   });
-  console.log("✅ Prices converted");
 }
 
-// Delay to ensure DOM is fully loaded (helps with React/Wix rendering)
+// Wait for page to fully load, then watch for dynamic price changes
 window.addEventListener("load", () => {
-  setTimeout(convertAllPrices, 3000); // adjust delay as needed
+  console.log("🔁 Starting auto price conversion…");
+
+  setTimeout(() => {
+    convertAllPrices();
+
+    // Check every 2 seconds for updates
+    setInterval(() => {
+      convertAllPrices();
+    }, 2000);
+  }, 3000);
 });

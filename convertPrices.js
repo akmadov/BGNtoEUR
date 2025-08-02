@@ -1,5 +1,4 @@
 const RATE = 1.95583;
-const convertedTextCache = new WeakSet(); // Track only DOM elements now
 
 function convertPriceText(bgnText) {
   const match = bgnText.match(/([\d,.]+)\s*лв/);
@@ -12,43 +11,37 @@ function convertPriceText(bgnText) {
   return `EUR ${eur}`;
 }
 
-function appendConvertedPrice(el) {
-  if (!el || typeof el.innerText !== "string") return;
-  if (convertedTextCache.has(el)) return;
-
-  const originalText = el.innerText.trim();
-  if (!originalText.includes("лв")) return;
-
-  const eur = convertPriceText(originalText);
-  if (eur) {
-    const span = document.createElement("span");
-    span.className = "eur-price-addon";
-    span.style.marginLeft = "6px";
-    span.style.fontStyle = "italic";
-    span.style.fontSize = "90%";
-    span.textContent = `(${eur})`;
-
-    el.appendChild(span);
-    convertedTextCache.add(el);
-  }
-}
-
 function convertAllPrices() {
   const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
   priceSelectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
-    elements.forEach(appendConvertedPrice);
+    elements.forEach((el) => {
+      if (
+        el.dataset &&
+        el.dataset.eurConverted === "true"
+      ) return;
+
+      const text = el.innerText.trim();
+      if (!text.includes("лв")) return;
+
+      const eur = convertPriceText(text);
+      if (eur) {
+        el.innerText = `${text} (${eur})`;
+        el.dataset.eurConverted = "true";
+      }
+    });
   });
 }
 
-// 👀 Observe changes and react
+// 👀 MutationObserver to catch dynamic updates
 const observer = new MutationObserver(() => {
   convertAllPrices();
 });
 
 window.addEventListener("load", () => {
-  console.log("🧪 Observer active: watching for price updates...");
-  convertAllPrices(); // Run initially
+  console.log("💶 Price converter loaded and watching...");
+  convertAllPrices();
+
   observer.observe(document.body, {
     childList: true,
     subtree: true,

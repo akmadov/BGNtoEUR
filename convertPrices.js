@@ -3,7 +3,7 @@ const RATE = 1.95583;
 function convertPriceText(bgnText) {
   const cleaned = bgnText
     .replace(/\./g, "")
-    .replace(",", ".")
+    .replace(",", ",")
     .replace(/[^\d.]/g, "");
   const bgn = parseFloat(cleaned);
   if (isNaN(bgn)) return null;
@@ -15,7 +15,7 @@ function appendEUR(el, eur) {
   eurSpan.className = "eur-price";
   eurSpan.textContent = ` (${eur} €)`;
   eurSpan.style.cssText = `
-    font-size: 0.9em;
+    font-size: 1.0em;
     color: #2E2E2E;
     margin-left: 6px;
     white-space: nowrap;

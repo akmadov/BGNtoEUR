@@ -1,6 +1,6 @@
 const RATE = 1.95583;
 
-function convertPriceText(bgnText) {
+function convertBGNToEUR(bgnText) {
   const match = bgnText.match(/([\d,.]+)\s*лв/);
   if (!match) return null;
 
@@ -11,29 +11,26 @@ function convertPriceText(bgnText) {
   return `EUR ${eur}`;
 }
 
-function convertAllPrices() {
-  console.log("🧪 Running safe price conversion...");
-  const priceSelectors = ["span", "p", "div"];
-  priceSelectors.forEach((selector) => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach((el) => {
-      if (
-        el.dataset?.eurOriginalText ||
-        !el.innerText.includes("лв")
-      ) return;
+function scanAndConvertPrices(rootNode) {
+  const elements = rootNode.querySelectorAll("span, p, div, h1, h2, h3");
 
-      const originalText = el.innerText;
-      const converted = convertPriceText(originalText);
-      if (!converted) return;
+  elements.forEach((el) => {
+    if (el.dataset.eurConverted) return;
 
-      el.innerText = `${originalText.trim()} (${converted})`;
-      el.dataset.eurOriginalText = originalText.trim(); // Prevent double conversions
-    });
+    const text = el.innerText;
+    if (!text.includes("лв")) return;
+
+    const eur = convertBGNToEUR(text);
+    if (eur) {
+      el.innerText += ` (${eur})`;
+      el.dataset.eurConverted = "true";
+    }
   });
-  console.log("✅ Price conversion done.");
 }
 
-window.addEventListener("load", () => {
-  console.log("🧪 Price converter loaded.");
-  setTimeout(convertAllPrices, 3000); // Give React time to fully render
-});
+// Required export for Wix Blocks
+export function render($root, props) {
+  setTimeout(() => {
+    scanAndConvertPrices(document.body);
+  }, 1500);
+}

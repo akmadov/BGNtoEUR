@@ -1,56 +1,53 @@
 const RATE = 1.95583;
 
-function convertBGNtoEUR(bgnText) {
-  const match = bgnText.match(/([\d\s,.]+)\s*лв/i);
+function convertPriceText(bgnText) {
+  const match = bgnText.match(/([\d,.]+)\s*лв/);
   if (!match) return null;
 
-  let bgn = match[1].replace(/\s/g, "").replace(",", ".");
-  let bgnFloat = parseFloat(bgn);
-  if (isNaN(bgnFloat)) return null;
+  const bgn = parseFloat(match[1].replace(/\./g, "").replace(",", "."));
+  if (isNaN(bgn)) return null;
 
-  const eur = (bgnFloat / RATE).toFixed(2);
-  return `(${eur} EUR)`;
+  const eur = (bgn / RATE).toFixed(2);
+  return eur;
 }
 
-function convertWixPrices() {
-  const priceElements = document.querySelectorAll('[data-hook="product-item-price-to-pay"]');
+function convertAllPrices() {
+  console.log("🔁 Running conversion…");
+  const priceSelectors = ["span", "p", "div", "h1", "h2", "h3"];
 
-  priceElements.forEach((el) => {
-    // Avoid duplicates
-    if (el.querySelector(".custom-eur-price")) return;
+  priceSelectors.forEach((selector) => {
+    const elements = document.querySelectorAll(selector);
 
-    const text = el.innerText;
-    if (!text.includes("лв")) return;
+    elements.forEach((el) => {
+      if (el.dataset.eurConverted) return;
+      if (!el.innerText.includes("лв")) return;
+      if (el.querySelector(".eur-price")) return;
 
-    const eurText = convertBGNtoEUR(text);
-    if (!eurText) return;
+      const originalText = el.innerText.trim();
+      const eur = convertPriceText(originalText);
 
-    // Create the EUR span
-    const span = document.createElement("span");
-    span.textContent = eurText;
-    span.className = "custom-eur-price";
-    span.style.cssText = `
-      flex: 0 0 100%;
-      display: block;
-      line-height: 0.85em;
-      font-size: 0.85em;
-      color: #2E2E2E;
-      text-align: center;
-      white-space: nowrap;
-      -webkit-text-stroke: 0.5px rgba(36, 36, 36, 0.35);
-      paint-order: stroke fill;
-    `;
+      if (eur) {
+        const eurSpan = document.createElement("span");
+        eurSpan.className = "eur-price";
+        eurSpan.textContent = `(${eur} EUR)`;
 
-    el.appendChild(span);
+        // ✅ Styling to match original price (no small text)
+        eurSpan.style.cssText = `
+          display: block;
+          text-align: center;
+          color: #2E2E2E;
+          margin-top: 2px;
+        `;
+
+        el.appendChild(eurSpan);
+        el.dataset.eurConverted = "true";
+      }
+    });
   });
+  console.log("✅ Prices converted");
 }
 
-// Run initially after DOM load
+// Delay to ensure DOM is fully loaded (helps with React/Wix rendering)
 window.addEventListener("load", () => {
-  console.log("💶 Running EUR converter...");
-  setTimeout(convertWixPrices, 1000);
+  setTimeout(convertAllPrices, 3000); // adjust delay as needed
 });
-
-// Monitor for DOM changes (e.g., filters, pagination)
-const observer = new MutationObserver(() => convertWixPrices());
-observer.observe(document.body, { childList: true, subtree: true });

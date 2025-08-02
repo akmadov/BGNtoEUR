@@ -10,10 +10,10 @@ function convertPriceText(bgnText) {
   return (bgn / RATE).toFixed(2);
 }
 
-function appendEUR(el, eur) {
+function append€(el, eur) {
   const eurSpan = document.createElement("span");
   eurSpan.className = "eur-price";
-  eurSpan.textContent = ` (${eur} EUR)`;
+  eurSpan.textContent = ` (${eur} €)`;
   eurSpan.style.cssText = `
     font-size: 0.9em;
     color: #2E2E2E;
@@ -29,7 +29,7 @@ function convertCategoryPrices() {
   productPriceElements.forEach((el) => {
     if (el.querySelector(".eur-price")) return;
     const eur = convertPriceText(el.textContent);
-    if (eur) appendEUR(el, eur);
+    if (eur) append€(el, eur);
   });
 }
 
@@ -40,7 +40,7 @@ function convertProductPagePrice() {
     const p = div.querySelector("p");
     if (!p || !p.innerText.includes("лв") || p.querySelector(".eur-price")) return;
     const eur = convertPriceText(p.innerText);
-    if (eur) appendEUR(p, eur);
+    if (eur) append€(p, eur);
   });
 }
 
@@ -54,7 +54,7 @@ function convertCartTotals() {
     const el = document.querySelector(selector);
     if (el && !el.querySelector(".eur-price")) {
       const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
+      if (eur) append€(el, eur);
     }
   });
 }
@@ -71,7 +71,7 @@ function convertSideCartPrices() {
     elements.forEach((el) => {
       if (el.querySelector(".eur-price")) return;
       const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
+      if (eur) append€(el, eur);
     });
   });
 }
@@ -88,9 +88,9 @@ function convertCheckoutSummaryPrices() {
     elements.forEach((el) => {
       const text = el.innerText;
       if (!text.includes("лв")) return;
-      if (text.includes("EUR")) return; // Prevent duplicates
+      if (text.includes("€")) return; // Prevent duplicates
       const eur = convertPriceText(text);
-      if (eur) el.innerText = `${text} (${eur} EUR)`;
+      if (eur) el.innerText = `${text} (${eur} €)`;
     });
   });
 }
@@ -107,9 +107,9 @@ function convertThankYouPrices() {
     elements.forEach((el) => {
       const text = el.innerText;
       if (!text.includes("лв")) return;
-      if (text.includes("EUR")) return;
+      if (text.includes("€")) return;
       const eur = convertPriceText(text);
-      if (eur) el.innerText = `${text} (${eur} EUR)`;
+      if (eur) el.innerText = `${text} (${eur} €)`;
     });
   });
 }
@@ -125,7 +125,7 @@ function convertAllPrices() {
 }
 
 window.addEventListener("load", () => {
-  console.log("🧪 EUR price converter running (all contexts)");
+  console.log("🧪 € price converter running (all contexts)");
 
   setTimeout(() => {
     convertAllPrices();

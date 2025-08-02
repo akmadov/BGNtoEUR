@@ -23,6 +23,7 @@ function appendEUR(el, eur) {
   el.appendChild(eurSpan);
 }
 
+// Category (product listings)
 function convertCategoryPrices() {
   const productPriceElements = document.querySelectorAll('[data-hook="product-item-price-to-pay"]');
   productPriceElements.forEach((el) => {
@@ -32,6 +33,7 @@ function convertCategoryPrices() {
   });
 }
 
+// Individual product page
 function convertProductPagePrice() {
   const richTextDivs = document.querySelectorAll('div[data-testid="richTextElement"]');
   richTextDivs.forEach((div) => {
@@ -42,6 +44,7 @@ function convertProductPagePrice() {
   });
 }
 
+// Cart page totals
 function convertCartTotals() {
   const cartSelectors = [
     '[data-hook="SubTotals.subtotalText"]',
@@ -56,6 +59,7 @@ function convertCartTotals() {
   });
 }
 
+// Side cart
 function convertSideCartPrices() {
   const selectors = [
     '[data-hook="CartItemDataHook.price"]',
@@ -72,34 +76,52 @@ function convertSideCartPrices() {
   });
 }
 
+// Checkout & Order Summary
 function convertCheckoutSummaryPrices() {
   const selectors = [
     '[data-hook="FoldableSummarySectionDataHook.total"]',
     '[data-hook="LineItemDataHooks.Price"]',
     '[data-hook="total-row-value"] span'
   ];
-
   selectors.forEach((selector) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach((el) => {
       const text = el.innerText;
       if (!text.includes("лв")) return;
       if (text.includes("EUR")) return; // Prevent duplicates
-
       const eur = convertPriceText(text);
-      if (eur) {
-        el.innerText = `${text} (${eur} EUR)`;
-      }
+      if (eur) el.innerText = `${text} (${eur} EUR)`;
     });
   });
 }
 
+// ✅ Thank You Page prices
+function convertThankYouPrices() {
+  const selectors = [
+    '[data-hook="ProductLineItemDataHook.totalPrice"]',
+    '[data-hook="subtotal-row-value"]',
+    '[data-hook="total-row-value"]'
+  ];
+  selectors.forEach((selector) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((el) => {
+      const text = el.innerText;
+      if (!text.includes("лв")) return;
+      if (text.includes("EUR")) return;
+      const eur = convertPriceText(text);
+      if (eur) el.innerText = `${text} (${eur} EUR)`;
+    });
+  });
+}
+
+// Run all conversion handlers
 function convertAllPrices() {
   convertCategoryPrices();
   convertProductPagePrice();
   convertCartTotals();
   convertSideCartPrices();
-  convertCheckoutSummaryPrices(); // ✅ Final set
+  convertCheckoutSummaryPrices();
+  convertThankYouPrices(); // ✅ now included
 }
 
 window.addEventListener("load", () => {
@@ -107,6 +129,6 @@ window.addEventListener("load", () => {
 
   setTimeout(() => {
     convertAllPrices();
-    setInterval(convertAllPrices, 2000); // Check for dynamic changes
+    setInterval(convertAllPrices, 2000);
   }, 3000);
 });

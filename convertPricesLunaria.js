@@ -73,8 +73,10 @@ function convertCartTotals() {
   convertWithAppending([
     '[data-hook="SubTotals.subtotalText"]',
     '[data-hook="Total.formattedValue"]',
+    '[data-hook="TotalShipping.estimatedShipping"]',
     'dd[data-hook="SubTotals.subtotalText"]',
-    'dd[data-hook="Total.formattedValue"]'
+    'dd[data-hook="Total.formattedValue"]',
+    'dd[data-hook="TotalShipping.estimatedShipping"]'
   ]);
 }
 

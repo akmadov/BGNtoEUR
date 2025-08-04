@@ -17,7 +17,7 @@ function appendEUR(el, eur) {
   eurSpan.textContent = ` (${eur} €)`;
   eurSpan.style.cssText = `
     font-size: 1em;
-    color: #2E2E2E;
+    color: #613D6C;
     margin-left: 6px;
     white-space: nowrap;
   `;

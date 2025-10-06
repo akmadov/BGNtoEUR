@@ -11,11 +11,12 @@ function convertPriceText(bgnText) {
 }
 
 function appendEUR(el, eur) {
+  if (el.querySelector(".eur-price")) return;
   const eurSpan = document.createElement("span");
   eurSpan.className = "eur-price";
   eurSpan.textContent = ` (${eur} €)`;
   eurSpan.style.cssText = `
-    font-size: 1.0em;
+    font-size: 1em;
     color: #2E2E2E;
     margin-left: 6px;
     white-space: nowrap;
@@ -23,21 +24,44 @@ function appendEUR(el, eur) {
   el.appendChild(eurSpan);
 }
 
-// Category (product listings)
-function convertCategoryPrices() {
-  const productPriceElements = document.querySelectorAll('[data-hook="product-item-price-to-pay"]');
-  productPriceElements.forEach((el) => {
-    if (el.querySelector(".eur-price")) return;
-    const eur = convertPriceText(el.textContent);
-    if (eur) appendEUR(el, eur);
+function convertWithInnerText(selectors) {
+  selectors.forEach((selector) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((el) => {
+      if (!el.innerText.includes("лв")) return;
+      if (el.innerText.includes("€")) return;
+      const eur = convertPriceText(el.innerText);
+      if (eur) el.innerText += ` (${eur} €)`;
+    });
   });
+}
+
+function convertWithAppending(selectors) {
+  selectors.forEach((selector) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((el) => {
+      if (!el.innerText.includes("лв")) return;
+      if (el.querySelector(".eur-price")) return;
+      const eur = convertPriceText(el.innerText);
+      if (eur) appendEUR(el, eur);
+    });
+  });
+}
+
+// Category and product listings
+function convertCategoryPrices() {
+  convertWithAppending([
+    '[data-hook="product-item-price-to-pay"]',
+    '[data-hook="formatted-primary-price"]',
+    '[data-hook="challenge-pricing"]'
+  ]);
 }
 
 // Individual product page
 function convertProductPagePrice() {
   const richTextDivs = document.querySelectorAll('div[data-testid="richTextElement"]');
   richTextDivs.forEach((div) => {
-    const p = div.querySelector("p");
+    const p = div.querySelector("p, h2, span");
     if (!p || !p.innerText.includes("лв") || p.querySelector(".eur-price")) return;
     const eur = convertPriceText(p.innerText);
     if (eur) appendEUR(p, eur);
@@ -46,87 +70,58 @@ function convertProductPagePrice() {
 
 // Cart page totals
 function convertCartTotals() {
-  const cartSelectors = [
+  convertWithAppending([
     '[data-hook="SubTotals.subtotalText"]',
-    '[data-hook="Total.formattedValue"]'
-  ];
-  cartSelectors.forEach((selector) => {
-    const el = document.querySelector(selector);
-    if (el && !el.querySelector(".eur-price")) {
-      const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
-    }
-  });
+    '[data-hook="Total.formattedValue"]',
+    '[data-hook="TotalShipping.estimatedShipping"]',
+    'dd[data-hook="SubTotals.subtotalText"]',
+    'dd[data-hook="Total.formattedValue"]',
+    'dd[data-hook="TotalShipping.estimatedShipping"]'
+  ]);
 }
 
 // Side cart
 function convertSideCartPrices() {
-  const selectors = [
+  convertWithAppending([
     '[data-hook="CartItemDataHook.price"]',
     '[data-hook="CartItemDataHook.totalPrice"] div',
-    '[data-hook="Footer.subtotalValue"]'
-  ];
-  selectors.forEach((selector) => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach((el) => {
-      if (el.querySelector(".eur-price")) return;
-      const eur = convertPriceText(el.innerText);
-      if (eur) appendEUR(el, eur);
-    });
-  });
+    '[data-hook="Footer.subtotalValue"]',
+    '[data-hook="cart-widget-item-price"]',
+    '[data-hook="cart-widget-total"]'
+  ]);
 }
 
 // Checkout & Order Summary
 function convertCheckoutSummaryPrices() {
-  const selectors = [
+  convertWithInnerText([
     '[data-hook="FoldableSummarySectionDataHook.total"]',
     '[data-hook="LineItemDataHooks.Price"]',
-    '[data-hook="total-row-value"] span'
-  ];
-  selectors.forEach((selector) => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach((el) => {
-      const text = el.innerText;
-      if (!text.includes("лв")) return;
-      if (text.includes("€")) return; // Prevent duplicates
-      const eur = convertPriceText(text);
-      if (eur) el.innerText = `${text} (${eur} €)`;
-    });
-  });
+    '[data-hook="total-row-value"] span',
+    '[data-hook="payment-checkout-summary-plan-price"]'
+  ]);
 }
 
-// ✅ Thank You Page prices
+// Thank You Page prices
 function convertThankYouPrices() {
-  const selectors = [
+  convertWithInnerText([
     '[data-hook="ProductLineItemDataHook.totalPrice"]',
     '[data-hook="subtotal-row-value"]',
     '[data-hook="total-row-value"]'
-  ];
-  selectors.forEach((selector) => {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach((el) => {
-      const text = el.innerText;
-      if (!text.includes("лв")) return;
-      if (text.includes("€")) return;
-      const eur = convertPriceText(text);
-      if (eur) el.innerText = `${text} (${eur} €)`;
-    });
-  });
+  ]);
 }
 
-// Run all conversion handlers
+// Convert all
 function convertAllPrices() {
   convertCategoryPrices();
   convertProductPagePrice();
   convertCartTotals();
   convertSideCartPrices();
   convertCheckoutSummaryPrices();
-  convertThankYouPrices(); // ✅ now included
+  convertThankYouPrices();
 }
 
 window.addEventListener("load", () => {
-  console.log("🧪 price converter running (all contexts)");
-
+  console.log("🧪 Multi-site EUR converter active");
   setTimeout(() => {
     convertAllPrices();
     setInterval(convertAllPrices, 2000);

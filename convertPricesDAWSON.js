@@ -73,7 +73,7 @@ function appendBGN(el, bgnText, color, fontSize) {
   span.textContent = ` / ${bgnText} лв.`;
   span.style.cssText = `
     font-size: ${fontSize || "1em"};
-    color: ${color || "#000000"};
+    color: ${color || "#043640"};
     margin-left: 6px;
     white-space: nowrap;
   `;
